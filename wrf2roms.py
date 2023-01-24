@@ -123,7 +123,7 @@ Uwind.description = "grid rel. x-wind component"
 Uwind.units = "m s-1"
 Uwind.time = "time"
 
-Vwind = ncdstfile.createVariable("Vwind", "f4", ("oceant_time", "eta_rho", "xi_rho"), fill_value=1.e+37)
+Vwind = ncdstfile.createVariable("Vwind", "f4", ("ocean_time", "eta_rho", "xi_rho"), fill_value=1.e+37)
 Vwind.long_name = "Wind velocity, v-component (m s-1)"
 Vwind.description = "grid rel. y-wind component"
 Vwind.units = "m s-1"

@@ -51,10 +51,17 @@ try:
 except:
     pass
 
+# Open the NetCDF domain grid file
+ncgridfile = Dataset(grid_filename)
+
 # Create an empty destination file
 ncdstfile = Dataset(dst, "w", format="NETCDF4")
 
 # Create dimensions
+for name, dimension in ncgridfile.dimensions.items():
+    ncdstfile.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
+print(ncdstfile.dimensions)
+'''
 eta_rho = ncdstfile.createDimension("eta_rho", 1135)
 xi_rho = ncdstfile.createDimension("xi_rho", 1528)
 eta_u = ncdstfile.createDimension("eta_u", 1135)
@@ -62,6 +69,7 @@ xi_u = ncdstfile.createDimension("xi_u", 1527)
 eta_v = ncdstfile.createDimension("eta_v", 1134)
 xi_v = ncdstfile.createDimension("xi_v", 1528)
 ocean_time_dim = ncdstfile.createDimension("ocean_time", 0)
+'''
 
 # Create variables
 lat = ncdstfile.createVariable("lat", "f8", ("eta_rho", "xi_rho"))
@@ -166,8 +174,6 @@ svstr.units = "Newton meter-2"
 svstr.scale_factor = 1000.
 svstr.time = "ocean_time"
 
-# Open the NetCDF domain grid file
-ncgridfile = Dataset(grid_filename)
 
 RHOlat = np.array(getvar(ncgridfile, "lat_rho", meta=False))
 RHOlon = np.array(getvar(ncgridfile, "lon_rho", meta=False))
@@ -202,7 +208,8 @@ for src in srcs:
 
     u10m = interp(Xlon, Xlat, uvmet10[0], RHOlon, RHOlat)
     v10m = interp(Xlon, Xlat, uvmet10[1], RHOlon, RHOlat)
-
+    print(u10m.shape)
+    print(v10m.shape)
     rotate(u10m, v10m, angle, 1.e+37)
 
     Uwind[timeStr, :, :] = u10m

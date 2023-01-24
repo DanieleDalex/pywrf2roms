@@ -175,7 +175,7 @@ RHOlon = np.array(getvar(ncgridfile, "lon_rho", meta=False))
 lat[:] = RHOlat
 lon[:] = RHOlon
 
-angle = np.array(getvar(ncgridfile, "angle", meta=False))
+angle = ncgridfile.variables['angle'][:]
 
 print("Interpolating...")
 

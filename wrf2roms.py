@@ -23,10 +23,10 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
 
 def rotate(u, v, angle_rot, missing_value):
     # For each j (eta axis)...
-    for j in range(len(v)):
+    for j in np.arange(0, len(v)):
 
         # For each i (xi axis)...
-        for i in range(len(u[j])):
+        for i in np.arange(0, len(u[j])):
 
             # Check if all values are not NaN and not a missing value
             if (u[j][i] != 'nan' and v[j][i] != 'nan' and angle_rot[j][i] != 'nan' and

@@ -33,9 +33,8 @@ def rotate(u, v, angle_rot, missing_value):
                     u[j][i] != missing_value and v[j][i] != missing_value and angle_rot[j][i] != missing_value):
                 rotU = (u[j][i] * np.cos(angle_rot[j][i]) + v[j][i] * np.sin(angle_rot[j][i]))
                 rotV = (v[j][i] * np.cos(angle_rot[j][i]) - u[j][i] * np.sin(angle_rot[j][i]))
-
-            u[j][i] = rotU
-            v[j][i] = rotV
+                u[j][i] = rotU
+                v[j][i] = rotV
 
 
 if len(sys.argv) != 4:

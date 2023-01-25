@@ -16,8 +16,8 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
     px = srcLons.flatten()
     z = np.array(invar2d).flatten()
     z[z == 1.e+37] = 'nan'
-    X, Y = np.meshgrid(dstLons, dstLats)
-    outvar2d = griddata((px, py), z, (X, Y), method='linear', fill_value=1.e+37)
+    # X, Y = np.meshgrid(dstLons, dstLats)
+    outvar2d = griddata((px, py), z, (dstLons, dstLats), method='linear', fill_value=1.e+37)
     return outvar2d
 
 
@@ -78,14 +78,14 @@ lat.long_name = "latitude of RHO-points"
 lat.units = "degree_north"
 lat.field = "lat_rho, scalar"
 lat.standard_name = "latitude"
-lat.CoordinateAxisType = "Lat"
+lat._CoordinateAxisType = "Lat"
 
 lon = ncdstfile.createVariable("lon", "f8", ("eta_rho", "xi_rho"))
 lon.long_name = "longitude of RHO-points"
 lon.units = "degree_east"
 lon.field = "lon_rho, scalar"
 lon.standard_name = "longitude"
-lon.CoordinateAxisType = "Lon"
+lon._CoordinateAxisType = "Lon"
 
 time = ncdstfile.createVariable("time", "f8", "ocean_time")
 time.long_name = "atmospheric forcing time"
@@ -142,21 +142,25 @@ lat_u = ncdstfile.createVariable("lat_u", "f8", ("eta_u", "xi_u"))
 lat_u.long_name = "latitude of U-points"
 lat_u.units = "degree_north"
 lat_u.standard_name = "latitude"
+lat_u._CoordinateAxisType = "Lat"
 
 lon_u = ncdstfile.createVariable("lon_u", "f8", ("eta_u", "xi_u"))
 lon_u.long_name = "longitude of U_points"
 lon_u.units = "degree_east"
 lon_u.standard_name = "longitude"
+lon_u._CoordinateAxisType = "Lon"
 
 lat_v = ncdstfile.createVariable("lat_v", "f8", ("eta_v", "xi_v"))
 lat_v.long_name = "latitude of V-points"
 lat_v.units = "degree_north"
 lat_v.standard_name = "latitude"
+lat_v._CoordinateAxisType = "Lat"
 
 lon_v = ncdstfile.createVariable("lon_v", "f8", ("eta_v", "xi_v"))
 lon_v.long_name = "longitude of V-points"
 lon_v.units = "degree_east"
 lon_v.standard_name = "longitude"
+lon_v._CoordinateAxisType = "Lon"
 
 ocean_time_var = ncdstfile.createVariable("ocean_time", "f8", "ocean_time")
 ocean_time_var.long_name = "surface ocean time"
@@ -176,9 +180,10 @@ svstr.scale_factor = 1000.
 svstr.time = "ocean_time"
 
 
-RHOlat = np.array(getvar(ncgridfile, "lat_rho", meta=False))
-RHOlon = np.array(getvar(ncgridfile, "lon_rho", meta=False))
-
+RHOlat = ncgridfile.variables['lat_rho'][:]
+RHOlon = ncgridfile.variables['lon_rho'][:]
+print("RHOlon:", RHOlon.shape)
+print("RHOlat:", RHOlat.shape)
 lat[:] = RHOlat
 lon[:] = RHOlon
 
@@ -196,7 +201,8 @@ for src in srcs:
 
     Xlat = np.array(getvar(ncsrcfile, "XLAT", meta=False))
     Xlon = np.array(getvar(ncsrcfile, "XLONG", meta=False))
-
+    print("Xlon:", Xlon.shape)
+    print("Xlat:", Xlat.shape)
     datetimeStr = str(b"".join(ncsrcfile.variables["Times"][:][0])).split("_")
     dateStr = str("".join(datetimeStr[0].split("-"))).replace("b'", "")
     timeStr = str("".join(datetimeStr[1].split(":"))).replace("'", "")
@@ -209,8 +215,8 @@ for src in srcs:
 
     u10m = interp(Xlon, Xlat, uvmet10[0], RHOlon, RHOlat)
     v10m = interp(Xlon, Xlat, uvmet10[1], RHOlon, RHOlat)
-    print(u10m.shape)
-    print(v10m.shape)
+    print("u10m:", u10m.shape)
+    print("v10m:", v10m.shape)
     rotate(u10m, v10m, angle, 1.e+37)
 
     Uwind[timeStr, :, :] = u10m

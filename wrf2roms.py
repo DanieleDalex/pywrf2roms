@@ -22,6 +22,7 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
 
 
 def rotate(u, v, angle_rot, missing_value):
+    """
     # For each j (eta axis)...
     for j in np.arange(0, len(v)):
 
@@ -35,6 +36,9 @@ def rotate(u, v, angle_rot, missing_value):
                 rotV = (v[j][i] * np.cos(angle_rot[j][i]) - u[j][i] * np.sin(angle_rot[j][i]))
                 u[j][i] = rotU
                 v[j][i] = rotV
+    """
+    u[:][:] = u[:][:] * np.cos(angle_rot[:][:]) + v[:][:] * np.sin(angle_rot[:][:]) if u[:][:] != 'nan' and v[:][:] != 'nan' and angle_rot[:][:] != 'nan' and u[:][:] != missing_value and v[:][:] != missing_value and angle_rot[:][:] != missing_value else u[:][:]
+    v[:][:] = v[:][:] * np.cos(angle_rot[:][:]) + u[:][:] * np.sin(angle_rot[:][:]) if u[:][:] != 'nan' and v[:][:] != 'nan' and angle_rot[:][:] != 'nan' and u[:][:] != missing_value and v[:][:] != missing_value and angle_rot[:][:] != missing_value else v[:][:]
 
 
 if len(sys.argv) != 4:

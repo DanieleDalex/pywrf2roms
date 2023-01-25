@@ -68,8 +68,9 @@ eta_u = ncdstfile.createDimension("eta_u", 1135)
 xi_u = ncdstfile.createDimension("xi_u", 1527)
 eta_v = ncdstfile.createDimension("eta_v", 1134)
 xi_v = ncdstfile.createDimension("xi_v", 1528)
-ocean_time_dim = ncdstfile.createDimension("ocean_time", 0)
 '''
+ocean_time_dim = ncdstfile.createDimension("ocean_time", 0)
+
 
 # Create variables
 lat = ncdstfile.createVariable("lat", "f8", ("eta_rho", "xi_rho"))

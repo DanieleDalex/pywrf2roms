@@ -21,17 +21,20 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
 
 
 def rotate(u, v, angle_rot, missing_value):
+    m = len(u)
+    n = len(u[0])
     u = np.array(u).flatten()
     v = np.array(v).flatten()
     angle_rot = np.array(angle_rot).flatten()
     # For each element in u...
-    for i, element in np.enumerate(u):
+    for i in np.arange(0, len(u)):
         # Check if all values are not NaN and not a missing value
         if (u[i] != 'nan' and v[i] != 'nan' and angle_rot[i] != 'nan' and
                 u[i] != missing_value and v[i] != missing_value and angle_rot[i] != missing_value):
             # Rotate the values
             u[i] = (u[i] * np.cos(angle_rot[i]) + v[i] * np.sin(angle_rot[i]))
             v[i] = (v[i] * np.cos(angle_rot[i]) - u[i] * np.sin(angle_rot[i]))
+    return np.reshape(u, (m, n)), np.reshape(v, (m, n))
 
 
 if len(sys.argv) != 4:
@@ -56,7 +59,6 @@ ncdstfile = Dataset(dst, "w", format="NETCDF4")
 # Create dimensions
 for name, dimension in ncgridfile.dimensions.items():
     ncdstfile.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
-print(ncdstfile.dimensions)
 '''
 eta_rho = ncdstfile.createDimension("eta_rho", 1135)
 xi_rho = ncdstfile.createDimension("xi_rho", 1528)
@@ -213,11 +215,10 @@ for src in srcs:
     print("u10m:", u10m.shape)
     print("v10m:", v10m.shape)
     rotate_time = tm.time()
-    rotate(u10m, v10m, angle, 1.e+37)
+    u10m, v10m = rotate(u10m, v10m, angle, 1.e+37)
     print(tm.time() - rotate_time)
     Uwind[timeStr, :, :] = u10m
     Vwind[timeStr, :, :] = v10m
 
-    print("u10m:", u10m.shape)
 
 ncdstfile.close()

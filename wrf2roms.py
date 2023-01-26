@@ -22,24 +22,15 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
 
 
 def rotate(u, v, angle_rot, missing_value):
-    """
-    # For each j (eta axis)...
-    for j in np.arange(0, len(v)):
+    # For each element in u...
+    for (i, j), element in np.ndenumerate(u):
 
-        # For each i (xi axis)...
-        for i in np.arange(0, len(u[j])):
-
-            # Check if all values are not NaN and not a missing value
-            if (u[j][i] != 'nan' and v[j][i] != 'nan' and angle_rot[j][i] != 'nan' and
-                    u[j][i] != missing_value and v[j][i] != missing_value and angle_rot[j][i] != missing_value):
-                rotU = (u[j][i] * np.cos(angle_rot[j][i]) + v[j][i] * np.sin(angle_rot[j][i]))
-                rotV = (v[j][i] * np.cos(angle_rot[j][i]) - u[j][i] * np.sin(angle_rot[j][i]))
-                u[j][i] = rotU
-                v[j][i] = rotV
-    """
-    u[:][:] = u[:][:] * np.cos(angle_rot[:][:]) + v[:][:] * np.sin(angle_rot[:][:]) if (u[:][:] != 'nan' and v[:][:] != 'nan' and angle_rot[:][:] != 'nan' and u[:][:] != missing_value and v[:][:] != missing_value and angle_rot[:][:] != missing_value).any() else u[:][:]
-    v[:][:] = v[:][:] * np.cos(angle_rot[:][:]) + u[:][:] * np.sin(angle_rot[:][:]) if (u[:][:] != 'nan' and v[:][:] != 'nan' and angle_rot[:][:] != 'nan' and u[:][:] != missing_value and v[:][:] != missing_value and angle_rot[:][:] != missing_value).any else v[:][:]
-
+        # Check if all values are not NaN and not a missing value
+        if (u[i][j] != 'nan' and v[i][j] != 'nan' and angle_rot[i][j] != 'nan' and
+                u[i][j] != missing_value and v[i][j] != missing_value and angle_rot[i][j] != missing_value):
+            # Rotate the values
+            u[i][j] = (u[i][j] * np.cos(angle_rot[i][j]) + v[i][j] * np.sin(angle_rot[i][j]))
+            v[i][j] = (v[i][j] * np.cos(angle_rot[i][j]) - u[i][j] * np.sin(angle_rot[i][j]))
 
 
 if len(sys.argv) != 4:
@@ -74,7 +65,6 @@ eta_v = ncdstfile.createDimension("eta_v", 1134)
 xi_v = ncdstfile.createDimension("xi_v", 1528)
 '''
 ocean_time_dim = ncdstfile.createDimension("ocean_time", 0)
-
 
 # Create variables
 lat = ncdstfile.createVariable("lat", "f8", ("eta_rho", "xi_rho"))
@@ -182,7 +172,6 @@ svstr.long_name = "Kinematic wind stress, v-component (m2 s-2)"
 svstr.units = "Newton meter-2"
 svstr.scale_factor = 1000.
 svstr.time = "ocean_time"
-
 
 RHOlat = ncgridfile.variables['lat_rho'][:]
 RHOlon = ncgridfile.variables['lon_rho'][:]

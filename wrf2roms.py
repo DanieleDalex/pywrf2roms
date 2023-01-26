@@ -2,7 +2,7 @@ from netCDF4 import Dataset, date2num
 from wrf import getvar, interplevel
 import sys
 from os.path import basename
-from datetime import timedelta, date, datetime
+import time as tm
 import numpy as np
 from scipy.interpolate import griddata
 import math
@@ -204,16 +204,16 @@ for src in srcs:
     uvmet10 = getvar(ncsrcfile, "uvmet10", meta=False)
 
     print("uvmet10:", uvmet10.shape)
-    interp_time = datetime.now()
+    interp_time = tm.time()
     u10m = interp(Xlon, Xlat, uvmet10[0], RHOlon, RHOlat)
     v10m = interp(Xlon, Xlat, uvmet10[1], RHOlon, RHOlat)
-    interp_time -= datetime.now()
+    interp_time -= tm.time()
     print(interp_time)
     print("u10m:", u10m.shape)
     print("v10m:", v10m.shape)
-    rotate_time = datetime.now()
+    rotate_time = tm.time()
     rotate(u10m, v10m, angle, 1.e+37)
-    rotate_time -= datetime.now()
+    rotate_time -= tm.time()
     print(rotate_time)
     Uwind[timeStr, :, :] = u10m
     Vwind[timeStr, :, :] = v10m

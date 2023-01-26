@@ -211,7 +211,7 @@ for src in srcs:
     print("v10m:", v10m.shape)
     rotate_time = tm.time()
     # rotate(u10m, v10m, angle, 1.e+37)
-    missing_value = 1.3+37
+    missing_value = 1.e+37
     for (i, j), element in np.ndenumerate(u10m):
         if (u10m[i][j] != 'nan' and v10m[i][j] != 'nan' and angle[i][j] != 'nan' and
                 u10m[i][j] != missing_value and v10m[i][j] != missing_value and angle[i][j] != missing_value):

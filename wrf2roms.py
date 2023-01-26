@@ -21,17 +21,17 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
 
 
 def rotate(u, v, angle_rot, missing_value):
-    u = np.array(u)
-    v = np.array(v)
-    angle_rot = np.array(angle_rot)
+    u = np.array(u).flatten()
+    v = np.array(v).flatten()
+    angle_rot = np.array(angle_rot).flatten()
     # For each element in u...
-    for (i, j), element in np.ndenumerate(u):
+    for i, element in np.enumerate(u):
         # Check if all values are not NaN and not a missing value
-        if (u[i][j] != 'nan' and v[i][j] != 'nan' and angle_rot[i][j] != 'nan' and
-                u[i][j] != missing_value and v[i][j] != missing_value and angle_rot[i][j] != missing_value):
+        if (u[i] != 'nan' and v[i] != 'nan' and angle_rot[i] != 'nan' and
+                u[i] != missing_value and v[i] != missing_value and angle_rot[i] != missing_value):
             # Rotate the values
-            u[i][j] = (u[i][j] * np.cos(angle_rot[i][j]) + v[i][j] * np.sin(angle_rot[i][j]))
-            v[i][j] = (v[i][j] * np.cos(angle_rot[i][j]) - u[i][j] * np.sin(angle_rot[i][j]))
+            u[i] = (u[i] * np.cos(angle_rot[i]) + v[i] * np.sin(angle_rot[i]))
+            v[i] = (v[i] * np.cos(angle_rot[i]) - u[i] * np.sin(angle_rot[i]))
 
 
 if len(sys.argv) != 4:

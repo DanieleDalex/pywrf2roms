@@ -21,6 +21,9 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
 
 
 def rotate(u, v, angle_rot, missing_value):
+    u = np.array(u)
+    v = np.array(v)
+    angle_rot = np.array(angle_rot)
     # For each element in u...
     for (i, j), element in np.ndenumerate(u):
         # Check if all values are not NaN and not a missing value
@@ -209,8 +212,6 @@ for src in srcs:
     print(tm.time() - interp_time)
     print("u10m:", u10m.shape)
     print("v10m:", v10m.shape)
-    u10m = np.array(u10m)
-    print("u10m:", u10m.shape)
     rotate_time = tm.time()
     rotate(u10m, v10m, angle, 1.e+37)
     print(tm.time() - rotate_time)

@@ -23,7 +23,6 @@ def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
 def rotate(u, v, angle_rot, missing_value):
     # For each element in u...
     for (i, j), element in np.ndenumerate(u):
-
         # Check if all values are not NaN and not a missing value
         if (u[i][j] != 'nan' and v[i][j] != 'nan' and angle_rot[i][j] != 'nan' and
                 u[i][j] != missing_value and v[i][j] != missing_value and angle_rot[i][j] != missing_value):
@@ -211,7 +210,13 @@ for src in srcs:
     print("u10m:", u10m.shape)
     print("v10m:", v10m.shape)
     rotate_time = tm.time()
-    rotate(u10m, v10m, angle, 1.e+37)
+    # rotate(u10m, v10m, angle, 1.e+37)
+    missing_value = 1.3+37
+    for (i, j), element in np.ndenumerate(u10m):
+        if (u10m[i][j] != 'nan' and v10m[i][j] != 'nan' and angle[i][j] != 'nan' and
+                u10m[i][j] != missing_value and v10m[i][j] != missing_value and angle[i][j] != missing_value):
+            u10m[i][j] = (u10m[i][j] * np.cos(angle[i][j]) + v10m[i][j] * np.sin(angle[i][j]))
+            v10m[i][j] = (v10m[i][j] * np.cos(angle[i][j]) - u10m[i][j] * np.sin(angle[i][j]))
     print(tm.time() - rotate_time)
     Uwind[timeStr, :, :] = u10m
     Vwind[timeStr, :, :] = v10m

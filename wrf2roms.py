@@ -8,7 +8,6 @@ from scipy.interpolate import griddata
 import math
 import os
 import sys
-import re
 
 
 def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
@@ -205,13 +204,17 @@ for src in srcs:
     uvmet10 = getvar(ncsrcfile, "uvmet10", meta=False)
 
     print("uvmet10:", uvmet10.shape)
-
+    interp_time = datetime.now()
     u10m = interp(Xlon, Xlat, uvmet10[0], RHOlon, RHOlat)
     v10m = interp(Xlon, Xlat, uvmet10[1], RHOlon, RHOlat)
+    interp_time -= datetime.now()
+    print(interp_time)
     print("u10m:", u10m.shape)
     print("v10m:", v10m.shape)
+    rotate_time = datetime.now()
     rotate(u10m, v10m, angle, 1.e+37)
-
+    rotate_time -= datetime.now()
+    print(rotate_time)
     Uwind[timeStr, :, :] = u10m
     Vwind[timeStr, :, :] = v10m
 

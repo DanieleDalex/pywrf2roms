@@ -207,14 +207,12 @@ for src in srcs:
     interp_time = tm.time()
     u10m = interp(Xlon, Xlat, uvmet10[0], RHOlon, RHOlat)
     v10m = interp(Xlon, Xlat, uvmet10[1], RHOlon, RHOlat)
-    interp_time -= tm.time()
-    print(interp_time)
+    print(tm.time() - interp_time)
     print("u10m:", u10m.shape)
     print("v10m:", v10m.shape)
     rotate_time = tm.time()
     rotate(u10m, v10m, angle, 1.e+37)
-    rotate_time -= tm.time()
-    print(rotate_time)
+    print(tm.time() - rotate_time)
     Uwind[timeStr, :, :] = u10m
     Vwind[timeStr, :, :] = v10m
 

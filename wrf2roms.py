@@ -10,6 +10,65 @@ import os
 import sys
 
 
+def calcStress(u, v, ust, angle_rot, slp, t2m, result0=None, result1=None):
+    m = len(u)
+    n = len(u[0])
+    u = np.array(u).flatten()
+    v = np.array(v).flatten()
+    angle_rot = np.array(angle_rot).flatten()
+    slp = np.array(slp).flatten()
+    t2m = np.array(t2m).flatten()
+    for i in np.arange(0, len(u)):
+        if u[i] != 1.e+37 and v[i] != 1.e+37:
+            rotU10m = (u[i] * np.cos(angle_rot[i]) + v[i] * np.sin(angle_rot[i]))
+            rotV10m = (v[i] * np.cos(angle_rot[i]) - u[i] * np.sin(angle_rot[i]))
+
+            aRotUV10m = np.arctan2(-rotV10m, (-rotU10m+1.e-8))
+
+            aUV10m = np.arctan2(-u[i], -(v[i]+1.e-8))
+            aDelta = aUV10m - aRotUV10m
+            if aDelta < angle_rot[i] - 1.e+10 or aDelta > angle_rot[i] + 1.e+10:
+                raise Exception("Bad rotation (angle)! ", aDelta)
+
+            rotUV10m2 = rotU10m * rotU10m + rotV10m * rotV10m
+            rotUV10m = np.power(rotUV10m2, .5)
+            UV10m = np.power(u[i] * u[i] + v[i] * v[i], .5)
+
+            delta = np.abs(rotUV10m - UV10m)
+            if delta > 1.e-10:
+                raise Exception("Bad rotaion (module)! ", delta)
+
+            rhoAir = slp[i] * 100 / (287.058 * (t2m[i] + 273.15))
+            dcU = 1.2875 / 1000
+            if ust == 999.9:
+                if rotUV10m > 7.5:
+                    dcU = (.8 + .065 * rotUV10m) / 1000
+
+            elif ust == 888.8:
+                if rotUV10m < 3:
+                    dcU = 2.17 / 1000
+                elif 3 <= rotUV10m <= 6:
+                    dcU = (0.29 + 3.1 / rotUV10m + 7.7 / (rotUV10m * rotUV10m)) / 1000
+                elif 6 < rotUV10m <= 26:
+                    dcU = (0.60 + 0.070 * rotUV10m) / 1000
+                else:
+                    dcU = 2.42 / 1000
+            else:
+                dcU = ust
+
+            result0[i] = -(rhoAir * (dcU * dcU) * np.sin(aRotUV10m))
+            result1[i] = -(rhoAir * (dcU * dcU) * np.cos(aRotUV10m))
+
+            aStress = np.arctan(result1 / (result0 + 1.e-8))
+            if aStress < aRotUV10m-1.e+10 or aRotUV10m > angle_rot[i] + 1.e+10:
+                raise Exception("Bad stress computation (angle)! ", aStress)
+
+        else:
+            result0[i] = 1.e+37
+            result1[i] = 1.e+37
+
+    return result0, result1
+
 def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
     py = srcLats.flatten()
     px = srcLons.flatten()
@@ -96,7 +155,7 @@ Pair.time = "time"
 
 Tair = ncdstfile.createVariable("Tair", "f4", ("ocean_time", "eta_rho", "xi_rho"), fill_value=1.e+37)
 Tair.long_name = "Air Temperature (2m)"
-Tair.units = "millibar"
+Tair.units = "Celsius"
 Tair.time = "time"
 
 Qair = ncdstfile.createVariable("Qair", "f4", ("ocean_time", "eta_rho", "xi_rho"), fill_value=1.e+37)
@@ -219,6 +278,22 @@ for src in srcs:
     print(tm.time() - rotate_time)
     Uwind[timeStr, :, :] = u10m
     Vwind[timeStr, :, :] = v10m
+
+    t2 = np.array(getvar(ncsrcfile, "T2", meta=False))
+    t2 = interp(Xlon, Xlat, t2, RHOlon, RHOlat)
+    Tair[timeStr, :, :] = t2
+    psfc = np.array(getvar(ncsrcfile, "PSFC", meta=False))
+    psfc = (interp(Xlon, Xlat, psfc, RHOlon, RHOlat)) / 100
+    Pair[timeStr, :, :] = psfc
+    q2 = np.array(getvar(ncsrcfile, "Q2", meta=False))
+    q2 = (interp(Xlon, Xlat, q2, RHOlon, RHOlat)) * 100
+    Qair[timeStr, :, :] = q2
+    swdown = np.array(getvar(ncsrcfile, "SWDOWN", meta=False))
+    swdown = interp(Xlon, Xlat, swdown, RHOlon, RHOlat)
+    swrad[timeStr, :, :] = swdown
+    glw = np.array(getvar(ncsrcfile, "GLW", meta=False))
+    glw = interp(Xlon, Xlat, glw, RHOlon, RHOlat)
+    lwrad_down[timeStr, :, :] = glw
 
 
 ncdstfile.close()

@@ -1,16 +1,13 @@
 from netCDF4 import Dataset, date2num
 from wrf import getvar, interplevel
-import sys
-from os.path import basename
 import time as tm
 import numpy as np
 from scipy.interpolate import griddata
-import math
 import os
 import sys
 
 
-def calcStress(u, v, ust, angle_rot, slp, t2m, result0=None, result1=None):
+def calcStress(u, v, ust, angle_rot, slp, t2m):
     m = len(u)
     n = len(u[0])
     u = np.array(u).flatten()
@@ -18,6 +15,8 @@ def calcStress(u, v, ust, angle_rot, slp, t2m, result0=None, result1=None):
     angle_rot = np.array(angle_rot).flatten()
     slp = np.array(slp).flatten()
     t2m = np.array(t2m).flatten()
+    result0 = np.zeros((len(u)))
+    result1 = np.zeros((len(u)))
     for i in np.arange(0, len(u)):
         if u[i] != 1.e+37 and v[i] != 1.e+37:
             rotU10m = (u[i] * np.cos(angle_rot[i]) + v[i] * np.sin(angle_rot[i]))
@@ -69,6 +68,7 @@ def calcStress(u, v, ust, angle_rot, slp, t2m, result0=None, result1=None):
 
     return result0, result1
 
+
 def interp(srcLons, srcLats, invar2d, dstLons, dstLats):
     py = srcLats.flatten()
     px = srcLons.flatten()
@@ -113,11 +113,17 @@ except:
 ncgridfile = Dataset(grid_filename)
 
 # Create an empty destination file
-ncdstfile = Dataset(dst, "w", format="NETCDF4")
+ncdstfile = Dataset(dst, "w", format="NETCDF4_CLASSIC")
 
 # Create dimensions
 for name, dimension in ncgridfile.dimensions.items():
     ncdstfile.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
+
+# create variables
+for name, variable in ncgridfile.variables.items():
+    x = ncdstfile.createVariable(name, variable.datatype, variable.dimensions)
+    ncdstfile[name].setncatts(ncgridfile[name].__dict__)
+
 '''
 eta_rho = ncdstfile.createDimension("eta_rho", 1135)
 xi_rho = ncdstfile.createDimension("xi_rho", 1528)
@@ -125,9 +131,10 @@ eta_u = ncdstfile.createDimension("eta_u", 1135)
 xi_u = ncdstfile.createDimension("xi_u", 1527)
 eta_v = ncdstfile.createDimension("eta_v", 1134)
 xi_v = ncdstfile.createDimension("xi_v", 1528)
-'''
 ocean_time_dim = ncdstfile.createDimension("ocean_time", 0)
+'''
 
+'''
 # Create variables
 lat = ncdstfile.createVariable("lat", "f8", ("eta_rho", "xi_rho"))
 lat.long_name = "latitude of RHO-points"
@@ -234,13 +241,12 @@ svstr.long_name = "Kinematic wind stress, v-component (m2 s-2)"
 svstr.units = "Newton meter-2"
 svstr.scale_factor = 1000.
 svstr.time = "ocean_time"
+'''
 
-RHOlat = ncgridfile.variables['lat_rho'][:]
-RHOlon = ncgridfile.variables['lon_rho'][:]
-print("RHOlon:", RHOlon.shape)
-print("RHOlat:", RHOlat.shape)
-lat[:] = RHOlat
-lon[:] = RHOlon
+lat_rho = ncgridfile.variables['lat_rho'][:]
+lon_rho = ncgridfile.variables['lon_rho'][:]
+ncdstfile.variables['lat'][:] = lat_rho
+ncdstfile.variables['lon'][:] = lon_rho
 
 angle = ncgridfile.variables['angle'][:]
 
@@ -268,32 +274,32 @@ for src in srcs:
 
     print("uvmet10:", uvmet10.shape)
     interp_time = tm.time()
-    u10m = interp(Xlon, Xlat, uvmet10[0], RHOlon, RHOlat)
-    v10m = interp(Xlon, Xlat, uvmet10[1], RHOlon, RHOlat)
+    u10m = interp(Xlon, Xlat, uvmet10[0], lon_rho, lat_rho)
+    v10m = interp(Xlon, Xlat, uvmet10[1], lon_rho, lat_rho)
     print(tm.time() - interp_time)
     print("u10m:", u10m.shape)
     print("v10m:", v10m.shape)
     rotate_time = tm.time()
     u10m, v10m = rotate(u10m, v10m, angle, 1.e+37)
     print(tm.time() - rotate_time)
-    Uwind[timeStr, :, :] = u10m
-    Vwind[timeStr, :, :] = v10m
+    ncdstfile.variables['Uwind'][timeStr, :, :] = u10m
+    ncdstfile.variables['Vwind'][timeStr, :, :] = v10m
 
     t2 = np.array(getvar(ncsrcfile, "T2", meta=False))
-    t2 = interp(Xlon, Xlat, t2, RHOlon, RHOlat)
-    Tair[timeStr, :, :] = t2
+    t2 = interp(Xlon, Xlat, t2, lon_rho, lat_rho)
+    ncdstfile.variables['Tair'][timeStr, :, :] = t2
     psfc = np.array(getvar(ncsrcfile, "PSFC", meta=False))
-    psfc = (interp(Xlon, Xlat, psfc, RHOlon, RHOlat)) / 100
-    Pair[timeStr, :, :] = psfc
+    psfc = (interp(Xlon, Xlat, psfc, lon_rho, lat_rho)) / 100
+    ncdstfile.variables['Pair'][timeStr, :, :] = psfc
     q2 = np.array(getvar(ncsrcfile, "Q2", meta=False))
-    q2 = (interp(Xlon, Xlat, q2, RHOlon, RHOlat)) * 100
-    Qair[timeStr, :, :] = q2
+    q2 = (interp(Xlon, Xlat, q2, lon_rho, lat_rho)) * 100
+    ncdstfile.variables['Qair'][timeStr, :, :] = q2
     swdown = np.array(getvar(ncsrcfile, "SWDOWN", meta=False))
-    swdown = interp(Xlon, Xlat, swdown, RHOlon, RHOlat)
-    swrad[timeStr, :, :] = swdown
+    swdown = interp(Xlon, Xlat, swdown, lon_rho, lat_rho)
+    ncdstfile.variables['swrad'][timeStr, :, :] = swdown
     glw = np.array(getvar(ncsrcfile, "GLW", meta=False))
-    glw = interp(Xlon, Xlat, glw, RHOlon, RHOlat)
-    lwrad_down[timeStr, :, :] = glw
+    glw = interp(Xlon, Xlat, glw, lon_rho, lat_rho)
+    ncdstfile.variables['lwrad_down'][timeStr, :, :] = glw
 
 
 ncdstfile.close()
